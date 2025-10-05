@@ -1,0 +1,30 @@
+<resources>
+    <!-- Uygulama adı -->
+    <string name="app_name">MindClearDemo</string>
+
+    <!-- Splash ve izin ekranı -->
+    <string name="permission_required">İzin Gerekli</string>
+    <string name="permission_explanation">Uygulamanın düzgün çalışması için aşağıdaki izne ihtiyacımız var:</string>
+
+    <!-- İzinler -->
+    <string name="usage_access">Kullanım Erişimi</string>
+    <string name="draw_over_apps">Diğer Uygulamaların Üstüne Çizim</string>
+    <string name="ignore_battery_opt">Batarya Optimizasyonu</string>
+    <string name="show_notifications">Bildirim İzni</string>
+
+    <!-- Butonlar -->
+    <string name="grant_permission">İzin Ver</string>
+    <string name="grant_all_permissions">Tamamla</string>
+
+    <!-- Genel -->
+    <string name="permission_icon_desc">İzin simgesi</string>
+    <string name="all_permissions_granted">Tüm izinler verildi!</string>
+
+    <!-- Eksik olan default template stringleri -->
+    <string name="next">İleri</string>
+    <string name="previous">Geri</string>
+    <string name="lorem_ipsum">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</string>
+    <string name="action_settings">Ayarlar</string>
+    <string name="first_fragment_label">Birinci Sayfa</string>
+    <string name="second_fragment_label">İkinci Sayfa</string>
+</resources>

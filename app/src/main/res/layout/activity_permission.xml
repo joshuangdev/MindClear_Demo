@@ -1,0 +1,64 @@
+<!-- res/layout/activity_permission.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:gravity="center"
+    android:background="?attr/colorSurface">
+
+
+    <ImageView
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:src="@android:drawable/ic_lock_lock"
+        app:tint="?attr/colorPrimary"
+        android:contentDescription="@string/permission_icon_desc" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/permission_required"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="?attr/colorOnSurface"
+        android:layout_marginTop="24dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/permission_explanation"
+        android:textAlignment="center"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:layout_marginTop="12dp" />
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        style="?attr/materialCardViewElevatedStyle">
+
+        <!-- 👇 TextView → MaterialTextView olarak değiştirildi -->
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/textPermissionName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:text="@string/usage_access"
+            android:textAlignment="center"
+            android:textStyle="bold"
+            android:textColor="?attr/colorPrimary"
+            android:textSize="18sp" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- MaterialButton zaten doğru -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonGrant"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="40dp"
+        android:text="@string/grant_permission"
+        style="@style/Widget.Material3.Button.ElevatedButton" />
+
+</LinearLayout>
