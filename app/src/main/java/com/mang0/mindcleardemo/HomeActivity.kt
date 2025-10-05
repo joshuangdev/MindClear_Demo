@@ -44,7 +44,7 @@ class HomeActivity : AppCompatActivity() {
             override fun afterTextChanged(s: Editable?) {}
         })
 
-        // Servisi başlat
+        // 🔹 Servisi başlat
         val serviceIntent = Intent(this, AppMonitorService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(serviceIntent)
@@ -100,6 +100,4 @@ class HomeActivity : AppCompatActivity() {
         if (q.isEmpty()) adapter.updateList(allApps)
         else adapter.updateList(allApps.filter { it.name.lowercase(Locale.getDefault()).contains(q) })
     }
-
-
 }
