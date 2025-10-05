@@ -52,6 +52,18 @@ class HomeActivity : AppCompatActivity() {
             startService(serviceIntent)
         }
 
+        // 🔹 Güncelleme kontrolü (GitHub üzerinden)
+        try {
+            val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                packageManager.getPackageInfo(packageName, 0).longVersionCode
+            } else {
+                @Suppress("DEPRECATION")
+                packageManager.getPackageInfo(packageName, 0).versionCode.toLong()
+            }
+            UpdateChecker.checkForUpdate(this, versionCode)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Sürüm bilgisi okunamadı: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun loadInstalledApps() {
