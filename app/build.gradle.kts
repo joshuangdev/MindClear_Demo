@@ -11,7 +11,7 @@ android {
         applicationId = "com.mang0.mindcleardemo"
         minSdk = 28
         targetSdk = 36
-        versionCode = 4
+        versionCode = 5
         versionName = "mangist"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
