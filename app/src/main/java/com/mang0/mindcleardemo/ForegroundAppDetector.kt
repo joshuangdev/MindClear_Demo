@@ -1,3 +1,4 @@
+//ForegroundAppDetector.kt
 package com.mang0.mindcleardemo
 
 import android.app.usage.UsageStats

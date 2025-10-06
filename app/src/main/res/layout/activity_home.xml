@@ -1,32 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="12dp"
-    tools:context=".HomeActivity"
-    android:background="#101010">
+    android:padding="24dp"
+    android:background="?attr/colorSurface"
+    tools:context=".HomeActivity">
 
-    <!-- Arama Çubuğu -->
-    <EditText
-        android:id="@+id/searchBar"
+    <TextView
+        android:id="@+id/titleText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Odaklanma Alanı"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="32dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Engellediğin Uygulamalar"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:textSize="16sp"
+        android:layout_marginBottom="12dp" />
+
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:hint="Uygulama ara..."
-        android:drawableStart="@android:drawable/ic_menu_search"
-        android:paddingStart="12dp"
-        android:textColor="#FFFFFF"
-        android:textColorHint="#AAAAAA"
-        android:background="@drawable/search_bg"
-        android:layout_marginBottom="8dp" />
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="?attr/colorSurfaceContainer"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        android:layout_marginBottom="40dp">
 
-    <!-- Uygulama Listesi -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/appListView"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/blockedAppsRecycler"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="80dp"
+            android:maxHeight="120dp"
+            android:padding="8dp"
+            android:clipToPadding="false"
+            tools:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:orientation="horizontal"
+            tools:listitem="@layout/item_app_chip" />
+    </androidx.cardview.widget.CardView>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/addAppButton"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:paddingBottom="16dp"
-        tools:listitem="@layout/item_app" />
+        android:layout_height="60dp"
+        android:text="+ YENİ UYGULAMA ENGELLE"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="40dp"
+        app:cornerRadius="12dp"
+        style="@style/Widget.Material3.Button.ElevatedButton" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Odaklanma İstatistikleri"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:textSize="16sp"
+        android:layout_marginBottom="12dp" />
 
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="120dp"
+        app:cardBackgroundColor="?attr/colorSurfaceContainer"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Buraya istatistik veya zamanlayıcı gelecek."
+            android:textColor="?attr/colorOnSurface"
+            android:alpha="0.7"
+            android:layout_margin="16dp"/>
+    </androidx.cardview.widget.CardView>
 </LinearLayout>

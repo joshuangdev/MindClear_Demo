@@ -51,6 +51,9 @@
             android:excludeFromRecents="true"
             android:noHistory="true"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
+        <activity
+            android:name=".AppSelectionActivity"
+            android:exported="false" />
 
         <!-- Foreground servisi -->
         <service

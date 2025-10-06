@@ -67,9 +67,8 @@ class AppMonitorService : Service() {
                 try {
                     val currentPackage = ForegroundAppDetector.getForegroundApp(this)
                     if (currentPackage != null && SelectedAppsManager.isAppSelected(this, currentPackage)) {
-                        val blockedIntent = Intent(this, BlockedActivity::class.java)
-                        blockedIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                        startActivity(blockedIntent)
+                        // Fade animasyonlu başlatma
+                        BlockedActivity.start(this)
                     }
                     Thread.sleep(500) // 0.5 saniyede bir kontrol
                 } catch (e: Exception) {
@@ -78,6 +77,7 @@ class AppMonitorService : Service() {
             }
         }.start()
     }
+
 
     override fun onBind(intent: Intent?): IBinder? = null
 }

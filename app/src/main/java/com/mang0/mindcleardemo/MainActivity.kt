@@ -1,4 +1,3 @@
-// MainActivity.kt
 package com.mang0.mindcleardemo
 
 import android.content.Intent
@@ -25,11 +24,15 @@ class MainActivity : AppCompatActivity() {
                 override fun onAnimationStart(animation: Animation?) {}
 
                 override fun onAnimationEnd(animation: Animation?) {
-                    if (PermissionUtils.allPermissionsGranted(this@MainActivity)) {
-                        startActivity(Intent(this@MainActivity, HomeActivity::class.java))
+                    val nextIntent = if (PermissionUtils.allPermissionsGranted(this@MainActivity)) {
+                        Intent(this@MainActivity, HomeActivity::class.java)
                     } else {
-                        startActivity(Intent(this@MainActivity, PermissionActivity::class.java))
+                        Intent(this@MainActivity, PermissionActivity::class.java)
                     }
+
+                    startActivity(nextIntent)
+                    // 🔹 Geçiş animasyonu (fade efekti)
+                    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
                     finish()
                 }
 
