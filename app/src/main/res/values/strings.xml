@@ -11,6 +11,8 @@
     <string name="draw_over_apps">Diğer Uygulamaların Üstüne Çizim</string>
     <string name="ignore_battery_opt">Batarya Optimizasyonu</string>
     <string name="show_notifications">Bildirim İzni</string>
+    <string name="accessibility_service">Erişilebilirlik Servisi</string>
+
 
     <!-- Butonlar -->
     <string name="grant_permission">İzin Ver</string>
@@ -27,4 +29,7 @@
     <string name="action_settings">Ayarlar</string>
     <string name="first_fragment_label">Birinci Sayfa</string>
     <string name="second_fragment_label">İkinci Sayfa</string>
+    <string name="accessibility_service_description">MindClearDemo erişilebilirlik servisi</string>
+    <string name="app_settings">Uygulama Ayarları</string>
+
 </resources>

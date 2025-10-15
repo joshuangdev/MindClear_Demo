@@ -1,0 +1,34 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Günlük kullanım süresi (dakika)"
+        android:textSize="16sp" />
+
+    <EditText
+        android:id="@+id/allowedMinutesEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:hint="Örn: 60" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Günlük açılma sayısı"
+        android:layout_marginTop="12dp"
+        android:textSize="16sp" />
+
+    <EditText
+        android:id="@+id/allowedLaunchesEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:hint="Örn: 5" />
+</LinearLayout>

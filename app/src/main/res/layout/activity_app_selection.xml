@@ -4,26 +4,27 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
     android:orientation="vertical"
-    android:padding="24dp"
-    android:background="?attr/colorSurface">
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Engellenecek Uygulamaları Seç"
-        android:textColor="?attr/colorOnSurface"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="32dp"/>
+    android:padding="24dp">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="32dp"
+        android:text="Engellenecek Uygulamaları Seç"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
         android:text="Kategoriler"
         android:textColor="?attr/colorOnSurface"
         android:textSize="20sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="16dp"/>
+        android:textStyle="bold" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/categoryTabsRecycler"
@@ -46,14 +47,39 @@
         android:layout_marginBottom="16dp"
         tools:listitem="@layout/item_selectable_app" />
 
+    <!-- YENİ: Ayrıntının eklendiğini gösteren TextView -->
+    <TextView
+        android:id="@+id/selectedDetailText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:gravity="center"
+        android:text="Engelleme nedeni belirtilmedi."
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
+    <!-- Ayrıntı Ekle Butonu -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/addDetailButton"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="AYRINTI EKLE"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:cornerRadius="12dp"
+        android:layout_marginBottom="8dp"/>
+
+    <!-- Seçimi Tamamla Butonu -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/confirmSelectionButton"
+        style="@style/Widget.Material3.Button.ElevatedButton"
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:text="SEÇİMİ TAMAMLA"
         android:textSize="16sp"
         android:textStyle="bold"
-        app:cornerRadius="12dp"
-        style="@style/Widget.Material3.Button.ElevatedButton"/>
+        app:cornerRadius="12dp" />
 
 </LinearLayout>

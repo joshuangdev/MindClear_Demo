@@ -1,83 +1,132 @@
 package com.mang0.mindcleardemo
 
-import android.content.pm.ServiceInfo
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
-import android.app.Service
+import android.accessibilityservice.AccessibilityService
 import android.content.Intent
-import android.os.Build
-import android.os.IBinder
-import androidx.core.app.NotificationCompat
+import android.util.Log
+import android.view.accessibility.AccessibilityEvent
+import java.util.Calendar
 
-class AppMonitorService : Service() {
+// AccessibilityService, cihazda hangi uygulamanın aktif olduğunu izlemek için kullanılır.
+// Bu sınıf, belirli uygulamaların kullanımını sınırlandırmak veya engellemek için tasarlanmış.
+class AppMonitorService : AccessibilityService() {
 
-    private val CHANNEL_ID = "AppMonitorServiceChannel"
-    private val NOTIFICATION_ID = 1
+    private val TAG = "AppMonitorService" // Log çıktıları için etiket
 
-    override fun onCreate() {
-        super.onCreate()
-        createNotificationChannel()
-        startForegroundServiceWithNotification()
-        startMonitoringApps()
+    // companion object: static benzeri alanlar tutmak için kullanılır
+    // Burada son engelleme veya sayaç artışını hatırlamak için kullanılıyor
+    companion object {
+        private var lastBlockedPackage: String? = null // Son engellenen uygulamanın paket adı
+        private var lastBlockTime: Long = 0            // Son engelleme zamanı (ms cinsinden)
+
+        private var lastIncrementedPackage: String? = null // Son sayacı artırılan uygulama
+        private var lastIncrementTime: Long = 0            // Son sayaç artış zamanı
+        private const val DEBOUNCE_TIME_MS = 1500          // Tekrarlamayı önlemek için 1.5 saniye bekleme süresi
     }
 
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "App Monitor Service",
-                NotificationManager.IMPORTANCE_LOW
-            )
-            val manager = getSystemService(NotificationManager::class.java)
-            manager?.createNotificationChannel(channel)
+    // Bu metod, sistemde belirli olaylar gerçekleştiğinde (örneğin pencere değişimi) tetiklenir
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        // Sadece pencere durumu değiştiğinde ilgileniyoruz (uygulama değişimi)
+        if (event?.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            return // Diğer event türlerini yok say
         }
-    }
 
-    private fun startForegroundServiceWithNotification() {
-        val notificationIntent = Intent(this, HomeActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            notificationIntent,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            else
-                PendingIntent.FLAG_UPDATE_CURRENT
-        )
+        val packageName = event.packageName?.toString() ?: return // Paket adını al
+        val className = event.className?.toString() ?: return     // Etkilenen sınıf adı
 
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("App Monitor Aktif")
-            .setContentText("Seçili uygulamaları izliyor")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentIntent(pendingIntent)
-            .build()
-
-        // Android 14+ (API 34+) için foregroundServiceType ekleyin
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
-        } else {
-            startForeground(NOTIFICATION_ID, notification)
+        // Kendi uygulamamızı veya ana ekranı izleme dışı bırakıyoruz
+        if (packageName == applicationContext.packageName || isLauncher(packageName)) {
+            return
         }
-    }
 
-    private fun startMonitoringApps() {
-        Thread {
-            while (true) {
-                try {
-                    val currentPackage = ForegroundAppDetector.getForegroundApp(this)
-                    if (currentPackage != null && SelectedAppsManager.isAppSelected(this, currentPackage)) {
-                        // Fade animasyonlu başlatma
-                        BlockedActivity.start(this)
-                    }
-                    Thread.sleep(500) // 0.5 saniyede bir kontrol
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+        // AppStatsManager üzerinden bu uygulama izleniyor mu kontrol et
+        // Eğer takip edilmiyorsa (null dönerse), işlem yapmadan çık
+        val stat = AppStatsManager.getStat(this, packageName) ?: return
+
+        // --- Buradan sonrası, sadece izlenen uygulamalar için çalışır ---
+        Log.d(TAG, "İzlenen uygulama açıldı: $packageName")
+
+        // 🔹 1. GÜN KONTROLÜ: Uygulamanın bugün kullanılmasına izin var mı?
+        val today = Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
+        if (today !in stat.allowedDays) {
+            Log.w(TAG, "$packageName için bugün izin verilmeyen bir gün. Engelleniyor.")
+            showBlockScreenIfNeeded(packageName, stat.blockReason) // Engelleme ekranı göster
+            return // Başka kontrol yapma, zaten engellendi
+        }
+
+        // 🔹 2. LİMİT KONTROLÜ: Günlük açılma hakkı sınırına ulaşıldı mı?
+        val limit = stat.allowedLaunchesPerDay
+        if (limit > 0 && stat.launchesToday >= limit) {
+            Log.w(TAG, "$packageName için günlük açılma limiti ($limit) aşıldı. Engelleniyor.")
+
+            // Aynı uygulama tekrar tekrar engellendiğinde gereksiz sayaç artışını önle
+            if (lastBlockedPackage != packageName) {
+                stat.blockedAttempts++ // Engellenme sayısını artır
+                AppStatsManager.saveStat(this, stat) // Güncellenmiş veriyi kaydet
             }
-        }.start()
+
+            showBlockScreenIfNeeded(packageName, stat.blockReason)
+            return
+        }
+
+        // 🔹 3. SAYAÇ ARTIRMA: Uygulama engellenmediyse, açılma sayısını bir artır.
+        val currentTime = System.currentTimeMillis()
+
+        // Eğer kısa süre içinde (1.5 sn) aynı uygulama zaten sayıldıysa, tekrar sayma
+        if (currentTime - lastIncrementTime < DEBOUNCE_TIME_MS && lastIncrementedPackage == packageName) {
+            return
+        }
+
+        // Her şey yolundaysa sayaç artır
+        lastIncrementTime = currentTime
+        lastIncrementedPackage = packageName
+
+        stat.launchesToday++ // Günlük açılma sayısını artır
+        AppStatsManager.saveStat(this, stat) // Güncel değeri kaydet
+        Log.i(TAG, "Sayaç artırıldı: $packageName -> ${stat.launchesToday} / $limit")
     }
 
+    /**
+     * Engelleme ekranını yalnızca gerekli durumlarda gösterir.
+     * Aynı uygulama için kısa sürede tekrar gösterilmesini önler.
+     */
+    private fun showBlockScreenIfNeeded(packageName: String, reason: String?) {
+        val currentTime = System.currentTimeMillis()
 
-    override fun onBind(intent: Intent?): IBinder? = null
+        // Aynı uygulama için 1.5 saniye içinde tekrar engelleme ekranı açmayı engelle
+        if (currentTime - lastBlockTime < DEBOUNCE_TIME_MS && lastBlockedPackage == packageName) {
+            return
+        }
+
+        // Engelleme zamanını ve uygulamayı güncelle
+        lastBlockTime = currentTime
+        lastBlockedPackage = packageName
+
+        // Engelleme ekranını (BlockedActivity) başlat
+        val intent = Intent(this, BlockedActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // Activity dışından başlatmak için gerekli flag
+            putExtra("BLOCK_REASON", reason ?: "Bu uygulamanın kullanım limiti doldu.") // Varsayılan mesaj
+        }
+        startActivity(intent)
+    }
+
+    // Servis kesilirse sistem tarafından çağrılır (örneğin erişilebilirlik devre dışı bırakıldığında)
+    override fun onInterrupt() {
+        Log.w(TAG, "Erişilebilirlik Servisi kesintiye uğradı.")
+    }
+
+    // Servis başarıyla başlatıldığında çağrılır
+    override fun onServiceConnected() {
+        super.onServiceConnected()
+        Log.i(TAG, "Erişilebilirlik Servisi başarıyla bağlandı!")
+    }
+
+    /**
+     * Verilen paket adının bir launcher (ana ekran) olup olmadığını kontrol eder.
+     * Böylece sistemin ana ekranı veya launcher uygulamaları izlenmez.
+     */
+    private fun isLauncher(packageName: String): Boolean {
+        val intent = Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_HOME) }
+        val resolveInfo = packageManager.resolveActivity(intent, 0)
+        return resolveInfo != null && resolveInfo.activityInfo.packageName == packageName
+    }
 }

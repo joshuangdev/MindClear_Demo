@@ -1,39 +1,101 @@
 package com.mang0.mindcleardemo
 
+import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.button.MaterialButton
+import com.mang0.mindcleardemo.databinding.ActivityAppSelectionBinding
 import java.util.Locale
 
+// Kullanıcının hangi uygulamaları sınırlandırmak istediğini seçtiği ekran
 class AppSelectionActivity : AppCompatActivity() {
 
-    private lateinit var appListView: RecyclerView
-    private lateinit var confirmButton: MaterialButton
+    private lateinit var binding: ActivityAppSelectionBinding
     private val allApps = mutableListOf<AppInfo>()
     private val adapter = AppAdapter(this, mutableListOf())
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_app_selection)
+    private var isDetailAdded = false
+    private var detailText: String? = null
+    private var detailMinutes: Int = 0
+    private var detailLaunches: Int = 0
 
-        appListView = findViewById(R.id.appListView)
-        confirmButton = findViewById(R.id.confirmSelectionButton)
-
-        appListView.layoutManager = LinearLayoutManager(this)
-        appListView.adapter = adapter
-
-        loadInstalledApps()
-
-        confirmButton.setOnClickListener {
-            finish() // Seçimler zaten SelectedAppsManager tarafından yönetiliyor
+    private val addDetailLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val data = result.data
+            isDetailAdded = true
+            detailText = data?.getStringExtra("DETAIL_REASON") ?: "Bir neden belirtildi"
+            detailMinutes = data?.getIntExtra("DETAIL_MINUTES", 0) ?: 0
+            detailLaunches = data?.getIntExtra("DETAIL_LAUNCHES", 0) ?: 0
+            updateUiAfterDetailAdded()
         }
     }
 
+    // Aktivite başlatıldığında arayüzü ve listeyi hazırlar
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityAppSelectionBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        binding.appListView.layoutManager = LinearLayoutManager(this)
+        binding.appListView.adapter = adapter
+        updateConfirmButtonState()
+        loadInstalledApps()
+
+        binding.addDetailButton.setOnClickListener {
+            val intent = Intent(this, AddDetailActivity::class.java)
+            addDetailLauncher.launch(intent)
+        }
+
+        binding.confirmSelectionButton.setOnClickListener {
+            val selectedPackages = adapter.getSelectedApps()
+
+            if (selectedPackages.isEmpty()) {
+                Toast.makeText(this, "En az bir uygulama seçin", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (!isDetailAdded) {
+                Toast.makeText(this, "Lütfen engelleme için bir ayrıntı ekleyin", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            selectedPackages.forEach { pkg ->
+                val stat = AppStat(
+                    packageName = pkg,
+                    allowedMinutesPerDay = detailMinutes,
+                    allowedLaunchesPerDay = detailLaunches,
+                    blockReason = detailText
+                )
+                AppStatsManager.saveStat(this, stat)
+                SelectedAppsManager.addApp(this, pkg)
+            }
+
+            Toast.makeText(this, "${selectedPackages.size} uygulama için seçimler kaydedildi", Toast.LENGTH_LONG).show()
+            finish()
+        }
+    }
+
+    // Ayrıntı eklendikten sonra kullanıcı arayüzünü günceller
+    private fun updateUiAfterDetailAdded() {
+        binding.selectedDetailText.text = "\"$detailText\""
+        binding.selectedDetailText.visibility = View.VISIBLE
+        binding.addDetailButton.text = "AYRINTIYI DÜZENLE"
+        updateConfirmButtonState()
+    }
+
+    // “Seçimi Tamamla” butonunun aktif/pasif durumunu kontrol eder
+    private fun updateConfirmButtonState() {
+        binding.confirmSelectionButton.isEnabled = isDetailAdded
+    }
+
+    // Cihazda yüklü uygulamaları arka planda yükler ve listeye ekler
     private fun loadInstalledApps() {
         Thread {
             try {
@@ -57,7 +119,11 @@ class AppSelectionActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 runOnUiThread {
-                    Toast.makeText(this, "Uygulamalar yüklenirken hata: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this,
+                        "Uygulamalar yüklenirken hata: ${e.localizedMessage}",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
         }.start()

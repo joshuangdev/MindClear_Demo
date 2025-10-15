@@ -2,9 +2,9 @@ package com.mang0.mindcleardemo
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.TextView
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 
@@ -16,6 +16,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         val textSplash = findViewById<TextView>(R.id.textSplash)
+
+        // Aslı, aklıma geldin 💛
 
         val fadeOut = AlphaAnimation(1f, 0f).apply {
             duration = 1800
@@ -29,9 +31,7 @@ class MainActivity : AppCompatActivity() {
                     } else {
                         Intent(this@MainActivity, PermissionActivity::class.java)
                     }
-
                     startActivity(nextIntent)
-                    // 🔹 Geçiş animasyonu (fade efekti)
                     overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
                     finish()
                 }

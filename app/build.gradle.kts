@@ -9,10 +9,10 @@ android {
 
     defaultConfig {
         applicationId = "com.mang0.mindcleardemo"
-        minSdk = 28
+        minSdk = 31
         targetSdk = 36
-        versionCode = 5
-        versionName = "mangist"
+        versionCode = 6
+        versionName = "im a stoobid mango"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -39,6 +39,7 @@ android {
 }
 
 dependencies {
+    implementation("com.google.code.gson:gson:2.13.2")
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

@@ -22,6 +22,7 @@ import com.google.android.material.textview.MaterialTextView
 class PermissionActivity : AppCompatActivity() {
 
     private val permissionKeys = listOf(
+        R.string.accessibility_service, // ✅ yeni adım
         R.string.usage_access,
         R.string.draw_over_apps,
         R.string.ignore_battery_opt,
@@ -41,6 +42,8 @@ class PermissionActivity : AppCompatActivity() {
         textPermission = findViewById(R.id.textPermissionName)
         buttonGrant = findViewById(R.id.buttonGrant)
 
+        // Aslı aklıma geldi, ufak bir not 💛
+
         // Bildirim izni için launcher
         notificationPermissionLauncher =
             registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -55,16 +58,54 @@ class PermissionActivity : AppCompatActivity() {
         buttonGrant.setOnClickListener { requestCurrentPermission() }
     }
 
-    private fun requestCurrentPermission() {
-        when (currentIndex) {
-            0 -> requestUsageAccess()
-            1 -> requestDrawOverApps()
-            2 -> requestIgnoreBatteryOptimization()
-            3 -> requestNotificationPermission()
+    override fun onResume() {
+        super.onResume()
+
+        // erişilebilirlik izni kullanıcı ayarlardan döndüğünde otomatik kontrol
+        if (currentIndex == 0 &&
+            PermissionUtils.isAccessibilityServiceEnabled(this, AppMonitorService::class.java)
+        ) {
+            goToNextStep()
+        }
+
+        // kullanım erişimi izni verildiyse devam et
+        if (currentIndex == 1 && hasUsageAccessPermission()) {
+            goToNextStep()
+        }
+
+        // overlay izni verildiyse devam et
+        if (currentIndex == 2 && Settings.canDrawOverlays(this)) {
+            goToNextStep()
         }
     }
 
-    // 📌 Kullanım erişimi
+    private fun requestCurrentPermission() {
+        when (currentIndex) {
+            0 -> requestAccessibilityService() // ✅ yeni eklendi
+            1 -> requestUsageAccess()
+            2 -> requestDrawOverApps()
+            3 -> requestIgnoreBatteryOptimization()
+            4 -> requestNotificationPermission()
+        }
+    }
+
+    // ✅ erişilebilirlik izni isteği
+    private fun requestAccessibilityService() {
+        if (PermissionUtils.isAccessibilityServiceEnabled(this, AppMonitorService::class.java)) {
+            goToNextStep()
+        } else {
+            AlertDialog.Builder(this)
+                .setTitle("Erişilebilirlik Servisi Gerekli")
+                .setMessage("Lütfen MindClear uygulaması için erişilebilirlik servisini aktif edin.")
+                .setPositiveButton("Ayarlar") { _, _ ->
+                    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                    startActivity(intent)
+                }
+                .setNegativeButton("İptal") { _, _ -> finish() }
+                .show()
+        }
+    }
+
     private fun requestUsageAccess() {
         if (hasUsageAccessPermission()) {
             goToNextStep()
@@ -80,7 +121,6 @@ class PermissionActivity : AppCompatActivity() {
         }
     }
 
-    // 📌 Overlay izni
     private fun requestDrawOverApps() {
         if (Settings.canDrawOverlays(this)) {
             goToNextStep()
@@ -101,7 +141,6 @@ class PermissionActivity : AppCompatActivity() {
         }
     }
 
-    // 📌 Batarya optimizasyonu
     private fun requestIgnoreBatteryOptimization() {
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -123,7 +162,6 @@ class PermissionActivity : AppCompatActivity() {
         }
     }
 
-    // 📌 Bildirim izni
     private fun requestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(
@@ -140,7 +178,6 @@ class PermissionActivity : AppCompatActivity() {
         }
     }
 
-    // 📌 Kullanım erişim izni var mı?
     private fun hasUsageAccessPermission(): Boolean {
         val appOps = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
         val mode = appOps.checkOpNoThrow(
@@ -157,14 +194,10 @@ class PermissionActivity : AppCompatActivity() {
             updateUI()
         } else {
             Toast.makeText(this, R.string.all_permissions_granted, Toast.LENGTH_SHORT).show()
-
-            val intent = Intent(this, HomeActivity::class.java)
-            startActivity(intent)
             startActivity(Intent(this, HomeActivity::class.java))
             finish()
         }
     }
-
 
     private fun showPermissionDeniedDialog() {
         AlertDialog.Builder(this)

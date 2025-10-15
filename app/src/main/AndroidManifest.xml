@@ -58,8 +58,35 @@
         <!-- Foreground servisi -->
         <service
             android:name=".AppMonitorService"
-            android:foregroundServiceType="specialUse"
-            android:exported="false" />
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
 
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+        <service
+            android:name=".ForegroundAppWatcherService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+        </service>
+
+        <activity
+            android:name=".AddDetailActivity"
+            android:exported="false" />
+        <receiver
+            android:name=".ServiceRestartReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.REBOOT" />
+                <action android:name="com.mang0.mindcleardemo.RESTART_SERVICE" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>
