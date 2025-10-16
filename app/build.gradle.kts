@@ -12,7 +12,7 @@ android {
         minSdk = 31
         targetSdk = 36
         versionCode = 7
-        versionName = "im a stoobid mango"
+        versionName = "mangist"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
