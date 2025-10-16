@@ -11,7 +11,7 @@ android {
         applicationId = "com.mang0.mindcleardemo"
         minSdk = 31
         targetSdk = 36
-        versionCode = 6
+        versionCode = 7
         versionName = "im a stoobid mango"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

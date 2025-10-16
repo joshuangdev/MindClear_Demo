@@ -15,6 +15,7 @@
         android:orientation="vertical">
 
         <!-- Başlık -->
+        <!-- Engellenen Uygulamalar -->
         <TextView
             android:id="@+id/titleText"
             android:layout_width="wrap_content"
@@ -24,7 +25,7 @@
             android:textColor="?attr/colorOnSurface"
             android:textSize="28sp"
             android:textStyle="bold" />
-        <!-- Engellenen Uygulamalar -->
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

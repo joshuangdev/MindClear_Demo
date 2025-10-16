@@ -7,7 +7,6 @@
     android:layout_height="wrap_content"
     android:padding="16dp">
 
-    <!-- Uygulama ikonu için ImageView -->
     <ImageView
         android:id="@+id/appIcon"
         android:layout_width="48dp"
@@ -39,12 +38,15 @@
         app:layout_constraintTop_toBottomOf="@id/appName"
         tools:text="Açılma sayısı: 0 / 10" />
 
-    <!-- focusTime TextView'ını silebilir veya başka bir amaçla kullanabilirsin -->
-    <!-- Şimdilik yorum satırı yapıyorum -->
-    <!--
     <TextView
-        android:id="@+id/focusTime"
-        ... />
-    -->
+        android:id="@+id/remainingTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textAppearance="?attr/textAppearanceCaption"
+        android:textColor="?attr/colorPrimary"
+        app:layout_constraintStart_toStartOf="@id/appName"
+        app:layout_constraintTop_toBottomOf="@id/blockedCount"
+        tools:text="Kalan Süre: 23 dakika" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

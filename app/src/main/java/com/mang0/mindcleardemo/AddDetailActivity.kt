@@ -1,5 +1,6 @@
 package com.mang0.mindcleardemo
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
@@ -8,13 +9,16 @@ import com.google.android.material.chip.Chip
 import com.mang0.mindcleardemo.databinding.ActivityAddDetailBinding
 import java.util.Calendar
 
+/**
+ * Kullanıcıya bir uygulama için detaylı limit ayarlarını (gün, süre, açılma sayısı) belirleme ekranı sağlar.
+ * Seçilen bilgiler AppSelectionActivity'ye geri gönderilir.
+ */
 class AddDetailActivity : AppCompatActivity() {
 
-    // ViewBinding objesi tanımlıyoruz (layout elemanlarına erişmek için)
     private lateinit var binding: ActivityAddDetailBinding
 
-    // Günleri haritalıyoruz (hafta içi - Calendar değerleri)
-    private val dayMap = mapOf( // Engelleme günleri
+    // Haftanın günlerini Türkçe kısaltma -> Calendar sabiti eşleştirmesi
+    private val dayMap = mapOf(
         "Pzt" to Calendar.MONDAY,
         "Sal" to Calendar.TUESDAY,
         "Çar" to Calendar.WEDNESDAY,
@@ -22,94 +26,96 @@ class AddDetailActivity : AppCompatActivity() {
         "Cum" to Calendar.FRIDAY,
         "Cmt" to Calendar.SATURDAY,
         "Paz" to Calendar.SUNDAY
-    )
+    ) // aslı 🩵
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // XML layout’u bağlama işlemi
         binding = ActivityAddDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Gün chip’lerini oluşturuyoruz
-        setupDayChips()
-        // Zaman ve kullanım sayısı seçicilerini ayarlıyoruz
-        setupPickers()
+        setupDayChips()  // Gün seçimleri için chip’leri hazırla
+        setupPickers()   // Süre ve açılma sayısı ayarlarını yükle
 
-        // Kaydet butonuna tıklanınca verileri geri yolluyoruz
+        // Kaydet butonuna tıklandığında verileri geri döndür
         binding.saveDetailButton.setOnClickListener {
-            saveAndReturn()
+            saveAndReturn() // aslı burda olsaydı "kaydetmeden çıkma" derdi :')
         }
     }
 
-    // Gün chip’lerini (Pzt, Sal, Çar vs.) dinamik olarak oluşturuyoruz
+    /**
+     * Haftanın günleri için checkable Chip’leri dinamik olarak oluşturur.
+     */
     private fun setupDayChips() {
         dayMap.keys.forEach { day ->
-            // Her gün için yeni bir Chip oluşturuluyor
             val chip = Chip(this).apply {
-                text = day // Chip üzerine günü yazıyoruz
-                isCheckable = true // Seçilebilir yapıyoruz
-                isChecked = true // Varsayılan olarak seçili geliyor
+                text = day
+                isCheckable = true
+                isChecked = true // Varsayılan olarak tüm günler seçili
             }
-            // Oluşturulan chip’i ChipGroup’a ekliyoruz
             binding.dayChipGroup.addView(chip)
         }
     }
 
-    // Saat, dakika ve uygulama açma sayısı seçicilerini ayarlıyoruz
+    /**
+     * Süre ve limit sayısı için NumberPicker ayarlarını yapar.
+     */
     private fun setupPickers() {
-        // Uygulama açılma sayısı 1 ile 10 arasında
-        binding.launchesPicker.minValue = 1
+        // Açılma sayısı 0 ile 10 arasında olabilir
+        binding.launchesPicker.minValue = 0
         binding.launchesPicker.maxValue = 10
-        binding.launchesPicker.value = 5 // Varsayılan 5
+        binding.launchesPicker.value = 5 // orta değer — aslı gibi dengeli 😄
 
-        // Saat seçici 0-23 arası
+        // Saat seçici 0–23 arası (günlük kullanım süresi saati)
         binding.hoursPicker.minValue = 0
         binding.hoursPicker.maxValue = 23
-        binding.hoursPicker.value = 1 // Varsayılan 1 saat
+        binding.hoursPicker.value = 1
 
-        // Dakika seçici 0-59 arası
+        // Dakika seçici 0–59 arası
         binding.minutesPicker.minValue = 0
         binding.minutesPicker.maxValue = 59
-        binding.minutesPicker.value = 0 // Varsayılan 0 dakika
+        binding.minutesPicker.value = 0
     }
 
-    // Verileri kontrol edip geri yolladığımız fonksiyon
+    /**
+     * Seçilen değerleri kontrol eder, geçerliyse ana aktiviteye gönderir.
+     */
     private fun saveAndReturn() {
-        // Seçilen günlerin ID’lerini alıyoruz
+        // Seçili günler alınır
         val selectedChips = binding.dayChipGroup.checkedChipIds
         if (selectedChips.isEmpty()) {
-            // Hiç gün seçilmediyse uyarı veriyoruz
             Toast.makeText(this, "En az bir gün seçmelisiniz.", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // Seçilen chip’leri Calendar günlerine çeviriyoruz
+        // Seçili chip’lerden Calendar günü çıkarılır
         val selectedDays = selectedChips.mapNotNull { id ->
             val chip = binding.dayChipGroup.findViewById<Chip>(id)
-            dayMap[chip.text.toString()] // “Pzt” gibi yazıyı Calendar.MONDAY’a çeviriyor
+            dayMap[chip.text.toString()]
         }
 
-        // Seçilen değerleri alıyoruz
+        // Kullanıcının belirlediği limit değerleri
         val launches = binding.launchesPicker.value
         val hours = binding.hoursPicker.value
         val minutes = binding.minutesPicker.value
-        val totalMinutes = (hours * 60) + minutes // Toplam süreyi dakikaya çeviriyoruz
+        val totalMinutes = (hours * 60) + minutes
 
-        // Süre 0 olursa hata veriyoruz
-        if (totalMinutes == 0) {
-            Toast.makeText(this, "Kullanım süresi 0 olamaz.", Toast.LENGTH_SHORT).show()
+        // Eğer iki değer de 0 ise limit koyulmamış demektir
+        if (launches == 0 && totalMinutes == 0) {
+            Toast.makeText(this, "Lütfen bir limit (Süre veya Açılma Sayısı) belirleyin.", Toast.LENGTH_LONG).show()
             return
         }
 
-        // Sonuç intent’i oluşturuyoruz ve verileri ekliyoruz
+        // Seçilen tüm değerleri Intent içine koy
         val resultIntent = Intent().apply {
+            // Bu anahtarlar AppSelectionActivity ile aynı olmalı
             putExtra("DETAIL_LAUNCHES", launches)
             putExtra("DETAIL_LIMIT_MINUTES", totalMinutes)
             putIntegerArrayListExtra("DETAIL_DAYS", ArrayList(selectedDays))
+            // aslı test
         }
 
-        // Sonucu geri gönderip aktiviteyi kapatıyoruz
-        setResult(RESULT_OK, resultIntent)
-        finish()
+        // Sonucu geri döndür ve aktiviteyi kapat
+        setResult(Activity.RESULT_OK, resultIntent)
+        finish() // aslı derdi ki “bitir ama düzgün bitir” 😅
     }
 }
