@@ -223,7 +223,7 @@ class HomeActivity : AppCompatActivity() {
                     loadStats()
                     Log.i(TAG, "✅ Tüm istatistikler sıfırlandı")
                     Toast.makeText(this, "İstatistikler sıfırlandı", Toast.LENGTH_SHORT).show()
-                } catch (e: Exception) {
+                } catch (e: Exception) { //Aslıbensenicoksevmekbb
                     Log.e(TAG, "❌ Sıfırlama sırasında hata: ${e.message}")
                     Toast.makeText(this, "İstatistikler sıfırlanırken hata oluştu", Toast.LENGTH_SHORT).show()
                 }
