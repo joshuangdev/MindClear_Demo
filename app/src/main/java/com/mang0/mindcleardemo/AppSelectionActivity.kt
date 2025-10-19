@@ -13,12 +13,16 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.mang0.mindcleardemo.databinding.ActivityAppSelectionBinding
 import java.util.Locale
 
-// Kullanıcının sınırlandırmak istediği uygulamaları seçtiği ekran
 class AppSelectionActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityAppSelectionBinding
-    private val allApps = mutableListOf<AppInfo>() // Tüm yüklü uygulamalar
-    private val adapter = AppAdapter(this, mutableListOf()) // RecyclerView adaptörü
+    private val allApps = mutableListOf<AppInfo>()
+
+    // Adapteri boş listeyle başlatıyoruz, sonra loadInstalledApps() ile dolduracağız
+    private val adapter = AppAdapter(
+        items = mutableListOf(),
+        onItemSelected = { _: AppInfo -> updateConfirmButtonState() }
+    )
 
     // Kullanıcı tarafından girilen limit bilgileri
     private var isDetailAdded = false
@@ -27,7 +31,7 @@ class AppSelectionActivity : AppCompatActivity() {
     private var detailLaunches: Int = 0
     private var detailDays: List<Int> = emptyList()
 
-    // Başka bir aktiviteden (AddDetailActivity) veri almak için launcher
+    // Başka bir aktiviteden veri almak için launcher
     private val addDetailLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -35,40 +39,33 @@ class AppSelectionActivity : AppCompatActivity() {
             val data = result.data
             isDetailAdded = true
 
-            // AddDetailActivity’den gelen veriler alınıyor
             detailMinutes = data?.getIntExtra("DETAIL_LIMIT_MINUTES", 0) ?: 0
             detailLaunches = data?.getIntExtra("DETAIL_LAUNCHES", 0) ?: 0
             detailDays = data?.getIntegerArrayListExtra("DETAIL_DAYS") ?: emptyList()
 
-            // Limitleri metin olarak birleştiriyoruz
             detailText = "Limitler: ${if (detailMinutes > 0) "${detailMinutes}dk" else "Sınırsız Süre"}, " +
                     "${if (detailLaunches > 0) "${detailLaunches} Açılış" else "Sınırsız Açılış"}"
 
             Log.d("AppSelectionActivity", "Limitler alındı: Süre=$detailMinutes, Açılış=$detailLaunches, Günler=${detailDays.size}")
-
             updateUiAfterDetailAdded()
         }
     }
 
-    // Aktivite oluşturulduğunda çağrılır — arayüz ve liste hazırlanır
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityAppSelectionBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // RecyclerView kurulumu
         binding.appListView.layoutManager = LinearLayoutManager(this)
         binding.appListView.adapter = adapter
         updateConfirmButtonState()
-        loadInstalledApps()
+        loadInstalledApps() // Burada context hazır olduğundan SelectedAppsManager çağrısı güvenli
 
-        // “Ayrıntı Ekle” butonuna tıklanınca yeni aktivite başlatılır
         binding.addDetailButton.setOnClickListener {
             val intent = Intent(this, AddDetailActivity::class.java)
             addDetailLauncher.launch(intent)
         }
 
-        // “Seçimi Tamamla” butonuna tıklanınca limitler kaydedilir
         binding.confirmSelectionButton.setOnClickListener {
             val selectedPackages = adapter.getSelectedApps()
 
@@ -82,18 +79,16 @@ class AppSelectionActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // Her seçilen uygulama için limit bilgileri AppStat nesnesine kaydedilir
             selectedPackages.forEach { pkg ->
-                val stat = AppStat( // Aslı’yı düşünmeden geçemiyorum...
+                val stat = AppStat(
                     packageName = pkg,
-                    allowedMinutesPerDay = detailMinutes,
                     allowedLaunchesPerDay = detailLaunches,
                     allowedDays = detailDays,
                     blockReason = detailText
                 )
                 AppStatsManager.saveStat(this, stat)
                 SelectedAppsManager.addApp(this, pkg)
-                Log.i("AppSelectionActivity", "Kaydedildi: $pkg - ${detailMinutes}dk")
+                Log.i("AppSelectionActivity", "Kaydedildi: $pkg")
             }
 
             Toast.makeText(this, "${selectedPackages.size} uygulama için seçimler kaydedildi", Toast.LENGTH_LONG).show()
@@ -101,7 +96,6 @@ class AppSelectionActivity : AppCompatActivity() {
         }
     }
 
-    // Ayrıntı eklendikten sonra arayüzü günceller
     private fun updateUiAfterDetailAdded() {
         binding.selectedDetailText.text = detailText
         binding.selectedDetailText.visibility = View.VISIBLE
@@ -109,20 +103,20 @@ class AppSelectionActivity : AppCompatActivity() {
         updateConfirmButtonState()
     }
 
-    // “Seçimi Tamamla” butonunun aktif/pasif durumunu kontrol eder
     private fun updateConfirmButtonState() {
         binding.confirmSelectionButton.isEnabled =
             isDetailAdded && adapter.getSelectedApps().isNotEmpty()
     }
 
-    // Cihazdaki yüklü uygulamaları arka planda yükler
     private fun loadInstalledApps() {
         Thread {
             try {
                 val pm = packageManager
+                val blockedApps = SelectedAppsManager.getSelectedApps(this) // context hazır
                 val apps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
-                    .filter { (it.flags and ApplicationInfo.FLAG_SYSTEM) == 0 } // Sistem uygulamalarını hariç tut
-                    .filter { it.packageName != packageName } // Kendi uygulamamızı listeleme
+                    .filter { (it.flags and ApplicationInfo.FLAG_SYSTEM) == 0 }
+                    .filter { it.packageName != packageName }
+                    .filter { !blockedApps.contains(it.packageName) } // Engellenmişleri gizle
                     .map {
                         AppInfo(
                             pm.getApplicationLabel(it).toString(),

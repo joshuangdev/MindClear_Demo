@@ -26,37 +26,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="28dp">
-
-                <ImageView
-                    android:layout_width="72dp"
-                    android:layout_height="72dp"
-                    android:layout_marginBottom="16dp"
-                    android:contentDescription="@string/app_settings"
-                    android:src="@drawable/ic_settings"
-                    android:tint="?attr/colorPrimary" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Engelleme Ayrıntıları"
-                    android:textAppearance="?attr/textAppearanceHeadlineSmall"
-                    android:textColor="?attr/colorOnSurface" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="Uygulama kullanım kurallarını belirleyin"
-                    android:textAppearance="?attr/textAppearanceBodyMedium"
-                    android:textColor="?attr/colorOnSurfaceVariant" />
-            </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <!-- Days Selection -->
@@ -125,6 +94,7 @@
                 android:orientation="vertical"
                 android:padding="20dp">
 
+                <!-- Günlük Kullanım Limiti -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -152,7 +122,7 @@
                         android:layout_height="24dp"
                         android:layout_marginEnd="8dp"
                         android:src="@drawable/ic_launch"
-                        android:tint="?attr/colorPrimary" />
+                        app:tint="?attr/colorPrimary" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -183,64 +153,61 @@
                     android:layout_marginVertical="16dp"
                     app:dividerColor="?attr/colorOutlineVariant" />
 
+                <!-- Seans Türü Seçimi -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Günlük Kullanım Süresi"
+                    android:text="Uygulama Türü"
                     android:textAppearance="?attr/textAppearanceTitleMedium"
-                    android:textColor="?attr/colorOnSurface" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:text="Günlük maksimum kullanım süresi"
-                    android:textAppearance="?attr/textAppearanceBodySmall"
-                    android:textColor="?attr/colorOnSurfaceVariant" />
-
-                <LinearLayout
+                    android:textColor="?attr/colorOnSurface"
+                    android:layout_marginBottom="8dp"/>
+                <RadioGroup
+                    android:id="@+id/sessionTypeGroup"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="start">
+
+                    <com.google.android.material.radiobutton.MaterialRadioButton
+                        android:id="@+id/radioBreathing"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Nefes Egzersizi" />
+
+                    <com.google.android.material.radiobutton.MaterialRadioButton
+                        android:id="@+id/radioComingSoon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="(Yapım Aşamasında)"
+                        android:layout_marginStart="16dp"/>
+                </RadioGroup>
+
+
+                <!-- Egzersiz Seans Sayısı -->
+                <LinearLayout
+                    android:id="@+id/breathingSessionsLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_marginEnd="8dp"
-                        android:src="@drawable/ic_timer"
-                        android:tint="?attr/colorPrimary" />
-
-                    <NumberPicker
-                        android:id="@+id/hoursPicker"
-                        android:layout_width="0dp"
-                        android:layout_height="100dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/number_picker_bg" />
+                    android:visibility="gone"
+                    android:layout_marginTop="12dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        android:text="saat"
+                        android:text="Egzersiz Sayısı:"
                         android:textAppearance="?attr/textAppearanceBodyMedium"
-                        android:textColor="?attr/colorOnSurfaceVariant" />
+                        android:textColor="?attr/colorOnSurface"/>
 
                     <NumberPicker
-                        android:id="@+id/minutesPicker"
-                        android:layout_width="0dp"
-                        android:layout_height="100dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/number_picker_bg" />
-
-                    <TextView
+                        android:id="@+id/breathingSessionsPicker"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:text="dakika"
-                        android:textAppearance="?attr/textAppearanceBodyMedium"
-                        android:textColor="?attr/colorOnSurfaceVariant" />
+                        android:layout_height="120dp"
+                        android:layout_marginStart="12dp"
+                        android:background="@drawable/number_picker_bg" />
                 </LinearLayout>
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -262,5 +229,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/limitsCard" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.core.widget.NestedScrollView>

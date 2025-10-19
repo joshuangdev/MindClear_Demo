@@ -4,17 +4,17 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
+import android.os.Build
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.mang0.mindcleardemo.databinding.ActivityHomeBinding
-import java.util.concurrent.TimeUnit
 
 class HomeActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityHomeBinding
-    private val blockedAppsAdapter = BlockedAppsAdapter() // Engellenen uygulamalar listesi için adapter
-    private val statsAdapter = AppStatsAdapter()           // Uygulama istatistikleri listesi için adapter
+    private val blockedAppsAdapter = BlockedAppsAdapter()
+    private val statsAdapter = AppStatsAdapter()
 
     companion object {
         private const val TAG = "HomeActivity"
@@ -25,17 +25,13 @@ class HomeActivity : AppCompatActivity() {
 
         Log.d(TAG, "🏠 HomeActivity başlatılıyor")
 
-        // Gün değiştiyse istatistikleri sıfırla
-        AppStatsManager.resetStatsIfNewDay(this)
-
-        // ViewBinding ile layout'u bağla
         binding = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setupUI()          // RecyclerView ve UI elemanlarını hazırla
-        setupClickListeners() // Buton ve liste tıklama dinleyicilerini kur
+        setupUI()
+        setupClickListeners()
+        checkForUpdate()
 
-        // Kullanım erişimi izni kontrolü
         if (!ForegroundAppDetector.hasUsageAccessPermission(this)) {
             Log.w(TAG, "🔒 Kullanım izni yok, izin talep ediliyor")
             ForegroundAppDetector.requestUsageAccessPermission(this)
@@ -44,15 +40,12 @@ class HomeActivity : AppCompatActivity() {
             Log.d(TAG, "🔓 Kullanım izni mevcut, servis başlatılıyor")
             startForegroundWatcher()
         }
-
-        // Belki bir gün bu ekrana birlikte bakarız aslı ...
     }
 
     override fun onResume() {
         super.onResume()
         Log.d(TAG, "🔄 HomeActivity onResume çağrıldı")
 
-        // Eğer izin verildiyse servis çalışıyor mu kontrol et
         if (ForegroundAppDetector.hasUsageAccessPermission(this)) {
             Log.d(TAG, "✅ Kullanım izni mevcut, servis kontrol ediliyor")
             startForegroundWatcher()
@@ -61,11 +54,8 @@ class HomeActivity : AppCompatActivity() {
             Toast.makeText(this, "Kullanım erişimi gerekli", Toast.LENGTH_SHORT).show()
         }
 
-        // Engellenen uygulamaları ve istatistikleri yükle
         loadBlockedApps()
         loadStats()
-
-        // Debug amaçlı logları güncelle
         debugBlockedApps()
         debugAllStats()
     }
@@ -73,12 +63,10 @@ class HomeActivity : AppCompatActivity() {
     private fun setupUI() {
         Log.d(TAG, "🎨 UI elemanları kuruluyor")
 
-        // Engellenen uygulamalar için yatay liste
         binding.blockedAppsRecycler.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         binding.blockedAppsRecycler.adapter = blockedAppsAdapter
 
-        // Uygulama istatistikleri için dikey liste
         binding.statsRecycler.layoutManager = LinearLayoutManager(this)
         binding.statsRecycler.adapter = statsAdapter
 
@@ -88,19 +76,16 @@ class HomeActivity : AppCompatActivity() {
     private fun setupClickListeners() {
         Log.d(TAG, "🖱️ Buton ve liste tıklama dinleyicileri kuruluyor")
 
-        // Yeni uygulama ekleme butonu
         binding.addAppButton.setOnClickListener {
             Log.d(TAG, "➕ Yeni uygulama ekle tıklandı")
             startActivity(Intent(this, AppSelectionActivity::class.java))
         }
 
-        // İstatistikleri sıfırlama butonu
         binding.resetStatsButton.setOnClickListener {
             Log.d(TAG, "🔄 İstatistik sıfırlama tıklandı")
             showResetStatsDialog()
         }
 
-        // Engellenen uygulama öğesine tıklandığında engeli kaldır
         blockedAppsAdapter.onItemClick = { app ->
             Log.d(TAG, "🗑️ Engellenen uygulama tıklandı: ${app.name}")
             showRemoveBlockDialog(app)
@@ -143,11 +128,17 @@ class HomeActivity : AppCompatActivity() {
             val statsList = AppStatsManager.getAllStats(this)
             Log.d(TAG, "📊 İstatistikler yükleniyor: ${statsList.size} kayıt")
 
-            // Adapter ile listeyi güncelle
+            // Açılma sayısını launchesToday / allowedLaunchesPerDay olarak TextView ya da RecyclerView adapter ile göster
             statsAdapter.updateList(statsList)
 
+            // Toplam engelleme
             val totalBlockedAttempts = statsList.sumOf { it.blockedAttempts }
             binding.blockedAttemptsText.text = "Toplam engelleme: $totalBlockedAttempts"
+
+            // Debug logları
+            statsList.forEach { stat ->
+                Log.d(TAG, "📊 ${stat.packageName} açılma: ${stat.launchesToday}/${stat.allowedLaunchesPerDay}")
+            }
 
             Log.d(TAG, "✅ İstatistikler yüklendi, toplam engelleme: $totalBlockedAttempts")
         } catch (e: Exception) {
@@ -156,49 +147,18 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    // Süreyi okunabilir formata çevir
-    private fun formatRemainingTime(remainingSeconds: Long): String {
-        return when (remainingSeconds) {
-            Long.MAX_VALUE -> "Sınırsız"
-            0L -> "Süre Doldu (0 saniye)"
-            else -> {
-                val minutes = remainingSeconds / 60
-                val seconds = remainingSeconds % 60
-                if (minutes > 0) "${minutes}dk ${seconds}s kaldı" else "${seconds} saniye kaldı"
-            }
-        }
-    }
 
     private fun debugBlockedApps() {
         Log.d(TAG, "=== 🐞 Engellenen uygulamalar debug ===")
         val blockedPackages = SelectedAppsManager.getSelectedApps(this)
         Log.d(TAG, "🚫 Paket sayısı: ${blockedPackages.size}")
 
-        if (blockedPackages.isEmpty()) {
-            Log.w(TAG, "⚠️  Hiç engellenen uygulama yok")
-        } else {
-            blockedPackages.forEachIndexed { index, pkg ->
-                Log.d(TAG, "📦 Engellenen $index: $pkg")
-
-                val stat = AppStatsManager.getStat(this, pkg)
-                if (stat != null) {
-                    val remainingSeconds = AppStatsManager.getRemainingTimeSeconds(stat)
-                    val timeDisplay = formatRemainingTime(remainingSeconds)
-                    val allowedMinutes = stat.allowedMinutesPerDay
-
-                    Log.d(TAG, "   📊 Açılış: ${stat.launchesToday}/${stat.allowedLaunchesPerDay}, Kalan süre: $timeDisplay (Toplam: ${allowedMinutes}dk)")
-                } else {
-                    Log.w(TAG, "   ❌ İstatistik bulunamadı!")
-                }
-
-                // Uygulama adını göster
-                try {
-                    val appInfo = packageManager.getApplicationInfo(pkg, 0)
-                    val appName = packageManager.getApplicationLabel(appInfo).toString()
-                    Log.d(TAG, "   📱 Uygulama adı: $appName")
-                } catch (e: Exception) {
-                    Log.e(TAG, "   ❌ Uygulama adı alınamadı: ${e.message}")
-                }
+        blockedPackages.forEachIndexed { index, pkg ->
+            Log.d(TAG, "📦 Engellenen $index: $pkg")
+            val stat = AppStatsManager.getStat(this, pkg)
+            if (stat != null) {
+            } else {
+                Log.w(TAG, "   ❌ İstatistik bulunamadı!")
             }
         }
         Log.d(TAG, "=== Debug sonu ===\n")
@@ -210,13 +170,9 @@ class HomeActivity : AppCompatActivity() {
         Log.d(TAG, "Toplam kayıt: ${allStats.size}")
 
         allStats.forEachIndexed { index, stat ->
-            val remainingSeconds = AppStatsManager.getRemainingTimeSeconds(stat)
-            val timeDisplay = formatRemainingTime(remainingSeconds)
-
             Log.d(TAG, "📊 İstatistik $index: ${stat.packageName}")
             Log.d(TAG, "   ➕ Açılma: ${stat.launchesToday}/${stat.allowedLaunchesPerDay}")
             Log.d(TAG, "   🚫 Engelleme: ${stat.blockedAttempts}")
-            Log.d(TAG, "   ⏱️ Kalan süre: $timeDisplay / Limit: ${stat.allowedMinutesPerDay}dk")
             Log.d(TAG, "   📅 İzinli günler: ${stat.allowedDays}")
             Log.d(TAG, "   📝 Sebep: ${stat.blockReason ?: "Belirtilmemiş"}")
         }
@@ -262,8 +218,6 @@ class HomeActivity : AppCompatActivity() {
                     stats.forEach {
                         it.launchesToday = 0
                         it.blockedAttempts = 0
-                        it.timeSpentTodaySeconds = 0L
-                        it.focusMinutes = 0
                         AppStatsManager.saveStat(this, it)
                     }
                     loadStats()
@@ -279,7 +233,6 @@ class HomeActivity : AppCompatActivity() {
             .show()
     }
 
-    // Servisi başlat
     private fun startForegroundWatcher() {
         try {
             Log.d(TAG, "🚀 Foreground watcher servisi başlatılıyor...")
@@ -297,6 +250,20 @@ class HomeActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e(TAG, "❌ Servis başlatılamadı: ${e.message}", e)
             Toast.makeText(this, "Servis başlatılamadı: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun checkForUpdate() {
+        try {
+            val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                packageManager.getPackageInfo(packageName, 0).longVersionCode
+            } else {
+                @Suppress("DEPRECATION")
+                packageManager.getPackageInfo(packageName, 0).versionCode.toLong()
+            }
+            UpdateChecker.checkForUpdate(this, versionCode)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Sürüm bilgisi okunamadı: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
         }
     }
 

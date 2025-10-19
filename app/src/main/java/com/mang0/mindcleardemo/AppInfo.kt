@@ -10,5 +10,6 @@ data class AppInfo(
     val name: String,             // Uygulamanın görünen adı (örnek: "YouTube")
     val packageName: String,      // Uygulamanın sistemdeki benzersiz paket adı (örnek: "com.google.android.youtube")
     val icon: Drawable,            // Uygulamanın simgesi (görsel)
-    var isSelected: Boolean = false // Kullanıcı tarafından seçilip seçilmediğini belirten durum (varsayılan: false)
+    var isSelected: Boolean = false, // Kullanıcı tarafından seçilip seçilmediğini belirten durum (varsayılan: false)
+    val selectedDays: List<String>? = null
 )

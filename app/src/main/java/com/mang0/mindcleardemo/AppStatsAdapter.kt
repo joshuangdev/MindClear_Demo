@@ -60,19 +60,6 @@ class AppStatsAdapter : RecyclerView.Adapter<AppStatsAdapter.ViewHolder>() {
             val launchesLimit = if (stat.allowedLaunchesPerDay == 0) "Sınırsız" else stat.allowedLaunchesPerDay
             binding.blockedCount.text = "Açılma sayısı: ${stat.launchesToday} / $launchesLimit"
 
-            // Kalan süre hesaplama
-            val allowedSeconds = stat.allowedMinutesPerDay * 60L
-            val spentSeconds = stat.timeSpentTodaySeconds
-            val remainingSeconds = allowedSeconds - spentSeconds
-
-            // Formatlanmış süre metnini oluştur
-            val timeText = if (stat.allowedMinutesPerDay == 0) {
-                "Süre: Sınırsız"
-            } else {
-                "Kalan Süre: ${formatRemainingTime(remainingSeconds)}"
-            }
-
-            binding.remainingTime.text = timeText
 
             // 🍂 küçük bir not: bazen kalan sürelere bakarken,
             // Aslı’yla geçirilen zamanın da hep "sınırsız" olmasını dilersin.
