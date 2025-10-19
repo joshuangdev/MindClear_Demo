@@ -18,20 +18,17 @@ class AppSelectionActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAppSelectionBinding
     private val allApps = mutableListOf<AppInfo>()
 
-    // Adapteri boş listeyle başlatıyoruz, sonra loadInstalledApps() ile dolduracağız
     private val adapter = AppAdapter(
         items = mutableListOf(),
         onItemSelected = { _: AppInfo -> updateConfirmButtonState() }
     )
 
-    // Kullanıcı tarafından girilen limit bilgileri
     private var isDetailAdded = false
     private var detailText: String? = null
-    private var detailMinutes: Int = 0
     private var detailLaunches: Int = 0
     private var detailDays: List<Int> = emptyList()
 
-    // Başka bir aktiviteden veri almak için launcher
+    // AddDetailActivity'den veri almak için launcher
     private val addDetailLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -39,14 +36,27 @@ class AppSelectionActivity : AppCompatActivity() {
             val data = result.data
             isDetailAdded = true
 
-            detailMinutes = data?.getIntExtra("DETAIL_LIMIT_MINUTES", 0) ?: 0
             detailLaunches = data?.getIntExtra("DETAIL_LAUNCHES", 0) ?: 0
             detailDays = data?.getIntegerArrayListExtra("DETAIL_DAYS") ?: emptyList()
 
-            detailText = "Limitler: ${if (detailMinutes > 0) "${detailMinutes}dk" else "Sınırsız Süre"}, " +
-                    "${if (detailLaunches > 0) "${detailLaunches} Açılış" else "Sınırsız Açılış"}"
+            // Sadece açılış limiti ve günleri gösteriyoruz
+            detailText = buildString {
+                append("Limitler: ")
+                append(
+                    if (detailLaunches > 0)
+                        "$detailLaunches Açılış"
+                    else
+                        "Sınırsız Açılış"
+                )
+                if (detailDays.isNotEmpty()) {
+                    append(" • Gün sayısı: ${detailDays.size}")
+                }
+            }
 
-            Log.d("AppSelectionActivity", "Limitler alındı: Süre=$detailMinutes, Açılış=$detailLaunches, Günler=${detailDays.size}")
+            Log.d(
+                "AppSelectionActivity",
+                "Limitler alındı: Açılış=$detailLaunches, Günler=${detailDays.size}"
+            )
             updateUiAfterDetailAdded()
         }
     }
@@ -59,7 +69,7 @@ class AppSelectionActivity : AppCompatActivity() {
         binding.appListView.layoutManager = LinearLayoutManager(this)
         binding.appListView.adapter = adapter
         updateConfirmButtonState()
-        loadInstalledApps() // Burada context hazır olduğundan SelectedAppsManager çağrısı güvenli
+        loadInstalledApps()
 
         binding.addDetailButton.setOnClickListener {
             val intent = Intent(this, AddDetailActivity::class.java)
@@ -112,7 +122,7 @@ class AppSelectionActivity : AppCompatActivity() {
         Thread {
             try {
                 val pm = packageManager
-                val blockedApps = SelectedAppsManager.getSelectedApps(this) // context hazır
+                val blockedApps = SelectedAppsManager.getSelectedApps(this)
                 val apps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
                     .filter { (it.flags and ApplicationInfo.FLAG_SYSTEM) == 0 }
                     .filter { it.packageName != packageName }

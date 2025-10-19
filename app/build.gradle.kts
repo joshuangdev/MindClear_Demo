@@ -9,9 +9,9 @@ android {
 
     defaultConfig {
         applicationId = "com.mang0.mindcleardemo"
-        minSdk = 31
+        minSdk = 28
         targetSdk = 36
-        versionCode = 8
+        versionCode = 9
         versionName = "mangist"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
