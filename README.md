@@ -20,7 +20,7 @@ Follow the steps below to run the project on your local machine.
 
 ### Backend
 
-| Category | Technology/Library / Kütüphane | Note |
+| Category | Technology/Library | Note |
 | :--- | :--- | :--- |
 | **Language** | **Kotlin** | Modern, safe and flexible language. |
 | **Dependencies** | `androidx.appcompat:appcompat:1.7.1` | |
